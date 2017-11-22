@@ -8,26 +8,27 @@ const chalk = require('chalk')
 const Watcher = require('./src/watcher')
 const Pusher = require('./src/pusher')
 
-const MSG_HELP = `Usage: aemsync [OPTIONS]
+const MSG_HELP = `Usage: aemsyncplus [OPTIONS]
 
 Options:
   -t targets           Defult is http://admin:admin@localhost:4502
   -w path_to_watch     Default is current
   -e exclude_filter    Micromatch exclude filter; disabled by default
   -i sync_interval     Update interval; default is 300ms
+  -p path_to_push      Specify path to prepend to existing folder structure;
+                       jcr_root automatically prepended; /jcr_root/<path_to_push>
   -d                   Enable debug mode
   -h                   Displays this screen
 
-Website: https://github.com/gavoja/aemsync`
+Website: https://github.com/giridhara-avadhani/aemsync`
 
-function aemsync (args) {
-  let pusher = new Pusher(args.targets.split(','), args.pushInterval, args.onPushEnd)
+function aemsyncplus (args) {
+  let pusher = new Pusher(args.targets.split(','), args.pushInterval, args.onPushEnd, args.workingDir, args.targetPath)
   let watcher = new Watcher()
-
   pusher.start()
   watcher.watch(args.workingDir, args.exclude, (localPath) => {
     pusher.enqueue(localPath)
-  })
+  }, args.targetPath)
 }
 
 function main () {
@@ -50,7 +51,8 @@ function main () {
 
   let targets = args.t ? args.t : 'http://admin:admin@localhost:4502'
   let pushInterval = args.i ? args.i : 300
-  let exclude = args.e ? args.e : ''
+  let exclude = args.e ? args.e : '';
+  let targetPath = args.p ? args.p : '';
 
   log.info(`
     Working dir: ${chalk.yellow(workingDir)}
@@ -59,14 +61,14 @@ function main () {
         Exclude: ${chalk.yellow(exclude)}
   `)
 
-  aemsync({workingDir, targets, pushInterval, exclude})
+  aemsyncplus({workingDir, targets, pushInterval, exclude})
 }
 
 if (require.main === module) {
   main()
 }
 
-aemsync.Watcher = Watcher
-aemsync.Pusher = Pusher
-aemsync.main = main
-module.exports = aemsync
+aemsyncplus.Watcher = Watcher
+aemsyncplus.Pusher = Pusher
+aemsyncplus.main = main
+module.exports = aemsyncplus

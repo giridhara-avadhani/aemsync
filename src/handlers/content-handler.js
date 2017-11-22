@@ -8,24 +8,25 @@ const RE_TARGET_PATH = /^.*\/(target|\..*)\/(.*\/)?jcr_root\/.*$/
 const IGNORED = ['.svn', '.hg', '.git']
 
 class ContentHandler {
-  process (localPath) {
+  process (localPath, customPath) {
     let cleanPath = localPath.replace(/\\/g, '/')
     // TODO: Simplify path checking.
 
     // Ignore CVS files.
-    if (IGNORED.some(i => cleanPath.endsWith(i))) {
+    if (IGNORED.some(i => cleanPath.endsWith(i)) && !customPath) {
       return null
     }
 
     // Skip paths on 'target' or dot prefixed folders
-    if (cleanPath.match(RE_TARGET_PATH)) {
+    if (cleanPath.match(RE_TARGET_PATH) && !customPath) {
       return null
     }
 
     // Process items only under 'jcr_root/*/'
-    if (!cleanPath.match(RE_CONTENT_PATH)) {
+    if (!cleanPath.match(RE_CONTENT_PATH) && !customPath) {
       return null
     }
+
 
     // Use parent if item is 'special'.
     if (cleanPath.match(RE_SPECIAL)) {

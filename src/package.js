@@ -32,9 +32,15 @@ class Package {
   }
 
   /** Gets item with metadata from local path. */
-  getItem (localPath) {
+  getItem (localPath, targetPath, workingDir) {
+    if(targetPath) {
+      let processedPath = localPath.substr(workingDir.length, localPath.length)
+      targetPath = "/src/main/content/jcr_root/" + targetPath + processedPath;
+    }
     let item = {
-      localPath: localPath
+      localPath: localPath,
+      targetPath: targetPath,
+      workingDir: workingDir
     }
 
     try {
@@ -49,8 +55,8 @@ class Package {
   }
 
   /** Adds local path to package. */
-  add (localPath) {
-    return this.addItem(this.getItem(localPath))
+  add (localPath, targetPath, workingDir) {
+    return this.addItem(this.getItem(localPath, targetPath, workingDir))
   }
 
   /** Adds item to package. */
@@ -71,8 +77,7 @@ class Package {
         this.items.splice(i, 1)
       }
     }
-
-    item.zipPath = item.zipPath || this.getZipPath(item.localPath)
+    item.zipPath = item.zipPath || this.getZipPath(item.targetPath ? item.targetPath : item.localPath)
     item.filterPath = item.filterPath || this.getFilterPath(item.zipPath)
     this.items.push(item)
 

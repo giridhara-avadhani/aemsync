@@ -8,14 +8,16 @@ const log = require('./log.js')
 
 /** Pushes changes to AEM. */
 class Pusher {
-  constructor (targets, interval, onPushEnd) {
+  constructor (targets, interval, onPushEnd, workingDir, targetPath) {
     this.lock = 0
     this.queue = []
     this.targets = targets
+    this.workingDir = workingDir
     this.interval = interval || 300
     this.handlers = [new ContentHandler()]
     this.sender = new Sender(targets)
     this.onPushEnd = onPushEnd || function () {}
+    this.targetPath = targetPath ? targetPath : '';
   }
 
   start () {
@@ -46,8 +48,13 @@ class Pusher {
     // Get all the items.
     let list = []
     Object.keys(dict).forEach(localPath => {
+
       this.handlers.forEach(handler => {
-        let processedPath = handler.process(localPath)
+        let processedPath = handler.process(localPath, this.targetPath)
+//        if(this.targetPath) {
+//          processedPath = processedPath.substr(this.workingDir.length, processedPath.length)
+//          processedPath = "/src/main/content/jcr_root/" + this.targetPath + processedPath
+//        }
         processedPath && list.push(processedPath)
       })
     })
@@ -56,7 +63,6 @@ class Pusher {
     if (list.length === 0) {
       return
     }
-
     // .. otherwise, process.
     this.process(list, err => {
       if (err) {
@@ -81,10 +87,9 @@ class Pusher {
       // Add all paths to the package.
       let pack = new Package()
       list.forEach(localPath => {
-        let item = pack.add(localPath)
+        let item = pack.add(localPath, this.targetPath, this.workingDir)
         item && log.info(item.exists ? 'ADD' : 'DEL', chalk.yellow(item.zipPath))
       })
-
       // Save the package.
       log.group()
       this.lock = this.targets.length
